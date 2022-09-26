@@ -1,0 +1,5 @@
+[wrap-git]
+
+url = git@github.com:boost-ext/ut.git
+revision = v1.1.9
+depth = 1
