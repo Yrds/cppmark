@@ -1,4 +1,5 @@
 #include "cppmark.hpp"
+#include <string_view>
 
 namespace cppmark {
   std::string
@@ -12,56 +13,62 @@ namespace cppmark {
     getBlocks(std::string md) {
       std::vector<Block> blocks;
 
+      std::string_view mdView{md.c_str()};
 
       int nextFind = 0;
 
-      while(md.at(nextFind) != md.back()) {
+      while(mdView.at(nextFind) != md.back()) {
         //If 4 spaces create a <pre><code> block
-        if(md.substr(nextFind, 4) == "    "){
+        if(mdView.substr(nextFind, 4) == "    "){
 
-        auto blockStart = nextFind + 4;
+          auto blockStart = nextFind + 4;
 
-        nextFind = md.find('\n', nextFind);
-
-          blocks.push_back({
-              "\t",
-              md.substr(blockStart, nextFind)
-              });
+          nextFind = tabBlock(mdView.substr(nextFind + blockStart), blocks) + nextFind;
 
           continue;
         } else {
           //Skip whitespaces
-          while(md.at(nextFind) == ' ') {
+          while(mdView.at(nextFind) == ' ') {
             nextFind++;
           }
 
-          if(md.at(nextFind) == '\t') {
-            auto blockStart = nextFind + 1;
+          if(mdView.at(nextFind) == '\t') {
 
-            nextFind = md.find('\n', nextFind);
+            nextFind = tabBlock(mdView.substr(nextFind), blocks) + nextFind;
 
-            while(md.at(blockStart) == ' ') {
-              blockStart++;
-            }
-
-
-
-            blocks.push_back({
-                "\t",
-                md.substr(blockStart, nextFind)
-                });
             continue;
+
           }
 
         }
 
         blocks.push_back({
             "",
-            md.substr(nextFind)
+            std::string(mdView.substr(nextFind).data())
             });
       }
 
       return blocks;
+    }
+
+  long unsigned int
+    tabBlock(std::string_view mdView, std::vector<Block>& blocks) {
+
+      //auto blockStart = nextFind + 1;
+
+      auto blockStart = 1;
+
+      auto nextFind = mdView.find("\n");
+
+      auto content = std::string(mdView.substr(blockStart, nextFind).data());
+
+      blocks.push_back({
+          "\t",
+          content
+          });
+
+      return nextFind;
+
     }
 
   std::string
