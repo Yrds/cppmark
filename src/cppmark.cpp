@@ -1,5 +1,4 @@
 #include "cppmark.hpp"
-#include <string_view>
 
 namespace cppmark {
   std::string
@@ -15,15 +14,15 @@ namespace cppmark {
 
       std::string_view mdView{md.c_str()};
 
-      int nextFind = 0;
+      unsigned long int nextFind = 0;
 
       while(mdView.at(nextFind) != md.back()) {
         //If 4 spaces create a <pre><code> block
         if(mdView.substr(nextFind, 4) == "    "){
 
-          auto blockStart = nextFind + 4;
+          nextFind += 4;
 
-          nextFind = tabBlock(mdView.substr(nextFind + blockStart), blocks) + nextFind;
+          nextFind = tabBlock(mdView.substr(nextFind), blocks) + nextFind;
 
           continue;
         } else {
@@ -34,6 +33,7 @@ namespace cppmark {
 
           if(mdView.at(nextFind) == '\t') {
 
+            nextFind++;
             nextFind = tabBlock(mdView.substr(nextFind), blocks) + nextFind;
 
             continue;
@@ -42,10 +42,14 @@ namespace cppmark {
 
         }
 
-        blocks.push_back({
-            "",
-            std::string(mdView.substr(nextFind).data())
-            });
+        if(nextFind < mdView.size()) {
+          blocks.push_back({
+              "",
+              std::string(mdView.substr(nextFind).data())
+              });
+        }
+
+        return blocks;
       }
 
       return blocks;
@@ -54,12 +58,15 @@ namespace cppmark {
   long unsigned int
     tabBlock(std::string_view mdView, std::vector<Block>& blocks) {
 
-      //auto blockStart = nextFind + 1;
+      constexpr auto blockStart = 0;
 
-      auto blockStart = 1;
+      auto nextFind = mdView.find("\n\n");
 
-      auto nextFind = mdView.find("\n");
+      if(nextFind == std::string_view::npos) {
+        nextFind = mdView.size() - 1;
+      }
 
+      //TODO fix blockStart position
       auto content = std::string(mdView.substr(blockStart, nextFind).data());
 
       blocks.push_back({
@@ -77,11 +84,19 @@ namespace cppmark {
 
       for(auto block: blocks) {
         if(block.symbol == "\t"){
-          html.append("<pre><code>" + block.content + "</code></pre>\n");
+          std::string content = block.content;
+
+          //NOTE This causing tests to failling
+        
+          for(unsigned long int tabPosition = content.find("    ", 0); tabPosition != std::string::npos; tabPosition = content.find("    ", tabPosition)) {
+            content.replace(tabPosition, 4, "");
+          }
+
+          html.append("<pre><code>" + content + "</code></pre>\n");
           continue;
         }
 
-        html.append(block.content);
+        html.append("<p>" + block.content + "</p>");
       }
 
       return html;
