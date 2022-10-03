@@ -2,7 +2,7 @@
 
 case $1 in
  'dev')
-   COMMAND="find src/ | entr meson test --verbose -C build ${@: 2}"
+   COMMAND="find src/ | entr meson test --verbose --timeout-multiplier 0.2 -C build ${@: 2}"
     ;;
   *)
     echo "Please specify a command"
